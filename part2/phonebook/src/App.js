@@ -18,12 +18,11 @@ const App = () => {
 		},[])
 	const [ isOpen, setIsOpen ] = useState(false)
 	const [ isOpen2, setIsOpen2 ] = useState(false)
-	const [ continueAdd, setContinueAdd ] = useState()
-	const [ continueDelete, setContinueDelete ] = useState(false)
+	const [ id, setID ] = useState('')
 	const [ newName, setNewName ] = useState('')
 	const [ newNumber, setNewNumber ] = useState('')
 	const [ filterString, setFilterString ] = useState('')
-	const [errorMessage, setErrorMessage] = useState({
+	const [ errorMessage, setErrorMessage ] = useState({
 		message: null,
 		category: null
 	})
@@ -49,23 +48,62 @@ const App = () => {
 	}
 
 
-	const deletePerson  = async (id) => {
-		const p = persons.find( person => person.id === id)
-		// setIsOpen2(true)
-		personService
-				.deletePerson(id)
-				.then(response => {
-					setPersons(persons.filter(person=>person.id!==id))
-		})
+	const deletePerson  = (id) => {
+		const p = persons.find(person => person.id === id)
+		setID(id)
+		setIsOpen2(true)
 	}
 
 	const addName = (event) => {
 		event.preventDefault()
 		if (persons.findIndex(person => person.name === newName) > -1 ){
-			// setIsOpen(true)
-		// if(continueAdd === true){
-			setContinueAdd(false)	
-			const id = persons.find(person=>person.name===newName).id
+			setIsOpen(true)
+		}
+		else{
+			const obj = {
+				name: newName,
+				number: newNumber
+			}
+			personService
+				.create(obj)
+				.then(newP => {
+
+					const mess = {
+						message: `Added ${newP.name}`,
+						category: 'success'
+					}
+					setErrorMessage(mess)
+					setTimeout(() => {
+						setErrorMessage({...errorMessage, message: null})
+					}, 5000)
+					setPersons(persons.concat(newP))
+					
+				})
+				.catch(error=>{
+					const mess = {
+						message: error.response.data.error,
+						category: 'error'
+					}
+					setErrorMessage(mess)
+					setTimeout(() => {
+						setErrorMessage({...errorMessage, message: null})
+					}, 5000)
+				})
+			
+		}
+}
+
+const handleNameChange = (event) => {
+	setNewName(event.target.value)
+	}
+
+const handleNumberChange = (event) => {
+	setNewNumber(event.target.value)
+	}
+
+const handleContinueConfirm = () => {
+	setIsOpen(false)
+	const id = persons.find(person=>person.name===newName).id
 			const obj = {
 				name: newName,
 				number: newNumber,
@@ -95,76 +133,27 @@ const App = () => {
 							setErrorMessage({...errorMessage, message: null})
 						}, 5000)
 					})
-		// }
-	}
-	else{
-		const obj = {
-			name: newName,
-			number: newNumber
-		}
-		personService
-			.create(obj)
-			.then(newP => {
-
-				const mess = {
-					message: `Added ${newP.name}`,
-					category: 'success'
-				}
-				setErrorMessage(mess)
-				setTimeout(() => {
-					setErrorMessage({...errorMessage, message: null})
-				}, 5000)
-				setPersons(persons.concat(newP))
-				
-			})
-			.catch(error=>{
-				const mess = {
-					message: error.response.data.error,
-					category: 'error'
-				}
-				setErrorMessage(mess)
-				setTimeout(() => {
-					setErrorMessage({...errorMessage, message: null})
-				}, 5000)
-			})
-		
-	}
 }
 
-const handleNameChange = (event) => {
-	setNewName(event.target.value)
-	}
+const handleContinueDeny = () => {
+	setIsOpen(false)
+}
 
-const handleNumberChange = (event) => {
-	setNewNumber(event.target.value)
-	}
+const handleContinueConfirm2 = () => {
+	setIsOpen2(false)
+	personService
+			.deletePerson(id)
+			.then(response => {
+				setPersons(persons.filter(person=>person.id!==id))
+			})
+}
 
-// const handleContinueConfirm = () => {
-// 	setContinueAdd(true)
-// 	setIsOpen(false)
-// }
-
-// const handleContinueDeny = () => {
-// 	setContinueAdd(false)
-// 	setIsOpen(false)
-// }
-
-// const handleContinueConfirm2 = () => {
-// 	console.log(continueDelete)
-// 	setContinueDelete(true, () => console.log(continueDelete))
-// 	console.log('hello')
-// 	setIsOpen2(false)
-// 	console.log('hello again')
-// 	console.log('hello again3')
-// }
-
-// const handleContinueDeny2 = () => {
-// 	setContinueDelete(false)
-// 	setIsOpen2(false)
-// }
+const handleContinueDeny2 = () => {
+	setIsOpen2(false)
+}
 	return (
-	<div style={{color: "#C22762"}}>
-		{/* <Alert 
+	<div style={{color: "#1F4B99"}}>
+		<Alert 
 			isOpen={isOpen}
 			cancelButtonText="Cancel"
 			confirmButtonText="Yes"
@@ -185,7 +174,7 @@ const handleNumberChange = (event) => {
 				<p> 
 					Delete this person?
 				</p>
-		</Alert> */}
+		</Alert>
 		<h2>Phonebook</h2>
 		<Notification m={errorMessage} />
 		<Filter handleFilterStringChange={handleFilterStringChange}/>
